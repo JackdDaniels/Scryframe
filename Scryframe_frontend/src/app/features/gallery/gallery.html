@@ -1,0 +1,94 @@
+<section class="gallery-page">
+  <header class="page-header">
+    <h1>Gallery</h1>
+    <p class="subtitle">Browse the catalog. Add tag chips to filter.</p>
+  </header>
+
+  <!-- ===== Search bar with tag chips ===== -->
+  <div class="search-bar">
+    @for (tag of searchTags(); track tag) {
+      <span class="tag-chip">
+        {{ tag }}
+        <button
+          type="button"
+          class="tag-chip__remove"
+          (click)="removeTag(tag)"
+          [attr.aria-label]="'Remove tag ' + tag"
+        >×</button>
+      </span>
+    }
+    <input
+      type="text"
+      class="tag-input"
+      [value]="tagInput()"
+      placeholder="Add a tag and press Enter…"
+      (input)="onTagInputChange($event)"
+      (keydown)="onTagInputKeydown($event)"
+    />
+    @if (searchTags().length > 0) {
+      <button type="button" class="link" (click)="clearAllTags()">Clear all</button>
+    }
+    <button type="button" class="link" (click)="refresh()" title="Refresh">↻</button>
+  </div>
+
+  <!-- ===== Status messages ===== -->
+  @if (errorMessage()) {
+    <p class="status status--error">{{ errorMessage() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="status status--info">Loading…</p>
+  } @else if (images().length === 0) {
+    <p class="status status--muted">
+      @if (searchTags().length === 0) {
+        No images yet. Upload one from the Upload page.
+      } @else {
+        No images match those tags.
+      }
+    </p>
+  } @else {
+    <!-- ===== 4×4 image grid ===== -->
+    <ul class="image-grid">
+      @for (image of pagedImages(); track image.id) {
+        <li class="image-card">
+          <a class="image-card__thumb" [href]="imageUrl(image)" target="_blank" rel="noopener">
+            <img
+              [src]="imageUrl(image)"
+              [alt]="image.fileName"
+              loading="lazy"
+            />
+          </a>
+          <div class="image-card__meta">
+            <span class="filename" [title]="image.fileName">{{ image.fileName }}</span>
+            <span class="tag-count">
+              {{ image.tags.length }} tag{{ image.tags.length === 1 ? '' : 's' }}
+            </span>
+          </div>
+        </li>
+      }
+    </ul>
+
+    <!-- ===== Pagination footer ===== -->
+    <footer class="pagination">
+      <button
+        type="button"
+        class="page-btn"
+        (click)="prevPage()"
+        [disabled]="currentPage() === 0"
+      >
+        ← Prev
+      </button>
+      <span class="page-info">
+        {{ pageInfo() }} · Page {{ currentPage() + 1 }} of {{ totalPages() }}
+      </span>
+      <button
+        type="button"
+        class="page-btn"
+        (click)="nextPage()"
+        [disabled]="currentPage() >= totalPages() - 1"
+      >
+        Next →
+      </button>
+    </footer>
+  }
+</section>

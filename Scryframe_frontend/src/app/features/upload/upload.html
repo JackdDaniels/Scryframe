@@ -1,0 +1,128 @@
+<section class="upload-page">
+  <header class="page-header">
+    <h1>Upload an image</h1>
+    <p class="subtitle">
+      Pick an image, the model will predict its tags, then confirm and save.
+    </p>
+  </header>
+
+  <!-- ===== Step 1: file picker (always visible until 'saved') ===== -->
+  @if (status() !== 'saved') {
+    <div class="picker">
+      <label class="file-input">
+        <input
+          type="file"
+          accept="image/*"
+          (change)="onFileSelected($event)"
+        />
+        <span class="file-input__label">
+          @if (file(); as f) {
+            {{ f.name }}
+          } @else {
+            Choose an image…
+          }
+        </span>
+      </label>
+    </div>
+  }
+
+  <!-- ===== Preview ===== -->
+  @if (previewUrl(); as url) {
+    <figure class="preview">
+      <img [src]="url" alt="Selected image preview" />
+    </figure>
+  }
+
+  <!-- ===== Step 2: upload + analyze button ===== -->
+  @if (status() === 'selected' || status() === 'error') {
+    <div class="actions">
+      <button
+        type="button"
+        class="primary"
+        [disabled]="!hasFile()"
+        (click)="onUpload()"
+      >
+        Upload &amp; analyze
+      </button>
+    </div>
+  }
+
+  <!-- ===== Status messages ===== -->
+  @switch (status()) {
+    @case ('analyzing') {
+      <p class="status status--info">Running DeepDanbooru… this can take a moment.</p>
+    }
+    @case ('saving') {
+      <p class="status status--info">Saving…</p>
+    }
+    @case ('saved') {
+      <p class="status status--success">Saved!</p>
+      <div class="actions">
+        <button type="button" class="primary" (click)="reset()">
+          Upload another
+        </button>
+      </div>
+    }
+    @case ('error') {
+      <p class="status status--error">{{ errorMessage() }}</p>
+    }
+  }
+
+  <!-- ===== Step 3: tag confirmation ===== -->
+  @if (status() === 'tagging' || status() === 'saving') {
+    <section class="tag-confirmation">
+      <header class="tag-confirmation__header">
+        <h2>Predicted tags</h2>
+        <p class="muted">
+          {{ selectedCount() }} of {{ sortedPredictions().length }} selected.
+          Tags above 75% confidence are pre-checked.
+        </p>
+        <div class="tag-actions">
+          <button type="button" class="link" (click)="selectAll()">Select all</button>
+          <button type="button" class="link" (click)="selectNone()">Select none</button>
+        </div>
+      </header>
+
+      @if (sortedPredictions().length === 0) {
+        <p class="muted">No tags were predicted for this image.</p>
+      } @else {
+        <ul class="tag-list">
+          @for (prediction of sortedPredictions(); track prediction.tag) {
+            <li class="tag-list__item">
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="isSelected(prediction.tag)"
+                  (change)="toggleTag(prediction.tag)"
+                />
+                <span class="tag-name">{{ prediction.tag }}</span>
+                <span class="tag-confidence">
+                  {{ formatConfidence(prediction.confidence) }}
+                </span>
+              </label>
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="actions">
+        <button
+          type="button"
+          class="primary"
+          [disabled]="status() === 'saving'"
+          (click)="onSave()"
+        >
+          Save with {{ selectedCount() }} tag{{ selectedCount() === 1 ? '' : 's' }}
+        </button>
+        <button
+          type="button"
+          class="secondary"
+          [disabled]="status() === 'saving'"
+          (click)="reset()"
+        >
+          Cancel
+        </button>
+      </div>
+    </section>
+  }
+</section>
